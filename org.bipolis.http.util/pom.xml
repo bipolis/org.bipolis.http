@@ -16,23 +16,8 @@
 		<dependency>
 			<groupId>org.bipolis</groupId>
 			<artifactId>org.bipolis.indexes.bundles-jakarta</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
 			<type>pom</type>
 		</dependency>
 	</dependencies>
-	<build>
-		<plugins>
-			<!-- Expected to inherit configuration from a parent enRoute pom. This 
-				includes -contract definitions and maven-jar-plugin setup -->
-			<plugin>
-				<groupId>biz.aQute.bnd</groupId>
-				<artifactId>bnd-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>biz.aQute.bnd</groupId>
-				<artifactId>bnd-baseline-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
 
 </project>

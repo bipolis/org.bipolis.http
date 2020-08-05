@@ -1,7 +1,7 @@
 package org.bipolis.http.client;
 
 import java.net.Authenticator;
-import java.net.InetSocketAddress;
+import java.net.CookieHandler;
 import java.net.ProxySelector;
 import java.net.http.HttpClient.Builder;
 import java.net.http.HttpClient.Redirect;
@@ -12,163 +12,75 @@ import java.util.Locale.Category;
 import org.bipolis.http.client.OsgiHttpClientBuilder.HttpClientConfig;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-// TODO: Auto-generated Javadoc
-/**
- * The Class OsgiHttpClientBuilder.
- */
 @Designate(factory = true, ocd = HttpClientConfig.class)
 @Component(service = Builder.class)
-public class OsgiHttpClientBuilder extends AbstractHttpClientBuilder {
+public class OsgiHttpClientBuilder extends AbstractHttpClientBuilder
+{
 
-	/**
-	 * The Interface HttpClientConfig.
-	 */
-	@ObjectClassDefinition
-	public static @interface HttpClientConfig {
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
+    private CookieHandler cookieHandler;
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
+    private Authenticator authenticator;
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
+    private ProxySelector proxySelector;
 
-		/**
-		 * Basic auth enable.
-		 *
-		 * @return true, if successful
-		 */
-		boolean basicAuth_enable() default false;
+    @ObjectClassDefinition
+    public static @interface HttpClientConfig
+    {
 
-		/**
-		 * Basic auth password.
-		 *
-		 * @return the string
-		 */
-		String basicAuth_password() default "";
+        Category c() default Category.DISPLAY;
 
-		/**
-		 * Basic auth user.
-		 *
-		 * @return the string
-		 */
-		String basicAuth_user();
+        Redirect followRedirects() default Redirect.NORMAL;
 
-		/**
-		 * C.
-		 *
-		 * @return the category
-		 */
-		Category c() default Category.DISPLAY;
+        int proxy_port();
 
-		/**
-		 * Follow redirects.
-		 *
-		 * @return the redirect
-		 */
-		Redirect followRedirects() default Redirect.NORMAL;
+        String proxy_server();
 
-		/**
-		 * Proxy basic auth enable.
-		 *
-		 * @return true, if successful
-		 */
-		boolean proxy_basicAuth_enable() default false;
+        long timeoutMs() default -1;
 
-		/**
-		 * Proxy enable.
-		 *
-		 * @return true, if successful
-		 */
-		boolean proxy_enable() default false;
+        Version version() default Version.HTTP_2;
+    }
 
-		/**
-		 * Proxy password.
-		 *
-		 * @return the string
-		 */
-		String proxy_password();
+    @Activate
+    private void activate(HttpClientConfig cfg)
+    {
 
-		/**
-		 * Proxy port.
-		 *
-		 * @return the int
-		 */
-		int proxy_port();
+        if (authenticator != null)
+        {
+            builder.authenticator(authenticator);
+            builder.followRedirects(Redirect.NORMAL);
+        }
 
-		/**
-		 * Proxy server.
-		 *
-		 * @return the string
-		 */
-		String proxy_server();
+        if (proxySelector != null)
+        {
+            builder.proxy(proxySelector);
+        }
 
-		/**
-		 * Proxy user.
-		 *
-		 * @return the string
-		 */
-		String proxy_user();
+        if (cfg.timeoutMs() > 0)
+        {
+            builder.connectTimeout(Duration.ofMillis(cfg.timeoutMs()));
+        }
 
-		/**
-		 * Timeout ms.
-		 *
-		 * @return the long
-		 */
-		long timeoutMs() default -1;
+        if (cfg.followRedirects() != null)
+        {
+            builder.followRedirects(cfg.followRedirects());
+        }
 
-		/**
-		 * Version.
-		 *
-		 * @return the version
-		 */
-		Version version() default Version.HTTP_2;
-	}
+        if (cfg.followRedirects() != null)
+        {
+            builder.version(cfg.version());
+        }
 
-	/**
-	 * Activate.
-	 *
-	 * @param cfg the cfg
-	 */
-	@Activate
-	private void activate(HttpClientConfig cfg) {
+        if (cookieHandler != null)
+        {
+            builder.cookieHandler(cookieHandler);
+        }
 
-		if (cfg.basicAuth_enable()) {
-
-			final Authenticator authenticator = CustomAuthenticator.authenticator(cfg.basicAuth_enable(),
-					cfg.basicAuth_user(), cfg.basicAuth_password(), cfg.proxy_basicAuth_enable(),
-					cfg.proxy_user(), cfg.proxy_password());
-			builder.authenticator(authenticator);
-			builder.followRedirects(Redirect.NORMAL);
-
-		}
-
-		if (cfg.proxy_enable()) {
-
-			final ProxySelector proxySelector = ProxySelector
-					.of(new InetSocketAddress(cfg.proxy_server(), cfg.proxy_port()));
-
-			builder.proxy(proxySelector);
-		}
-
-		if (cfg.timeoutMs() > 0) {
-			builder.connectTimeout(Duration.ofMillis(cfg.timeoutMs()));
-		}
-
-		if (cfg.followRedirects() != null) {
-
-			builder.followRedirects(cfg.followRedirects());
-		}
-
-		if (cfg.followRedirects() != null) {
-
-			builder.version(cfg.version());
-		}
-	}
-
-	/**
-	 * De activate.
-	 */
-	@Deactivate
-	private void deActivate() {
-
-	}
+    }
 
 }
